@@ -14,7 +14,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 
-SCOPES = 'https://www.googleapis.com/auth/drive'
+SCOPES = ['https://www.googleapis.com/auth/drive']
 def main():
     """
     Download folder content from google dirve without zipping.
