@@ -5,7 +5,9 @@ from termcolor import colored
 from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.discovery import build
 from httplib2 import Http
-from oauth2client import file, client, tools
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 import os
 import sys
 import re
@@ -17,13 +19,22 @@ def main():
     """
     init()
 
-    # cls()
-    store = file.Storage('token.json')
-    creds = store.get()
-    if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
-        creds = tools.run_flow(flow, store)
-    service = build('drive', 'v3', http=creds.authorize(Http()))
+    creds = None
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+
+    service = build('drive', 'v3', credentials=creds)
     print(colored('* Directory to save - enter to use current directory', 'blue'))
     folderName = input("   - Path: ")
     if not folderName:
@@ -137,4 +148,5 @@ def no_accent_vietnamese(s):
     return s
 
 if __name__ == '__main__':
+    # python3 qdownload.py
     main()
