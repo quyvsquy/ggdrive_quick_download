@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
+import re
+import os
+import sys
+import pathlib
+from httplib2 import Http
+from termcolor import colored
 from googleapiclient import errors
 from colorama import init,Fore,Back,Style
-from termcolor import colored
-from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.discovery import build
-from httplib2 import Http
+from googleapiclient.http import MediaIoBaseDownload
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-import os
-import sys
-import re
+
 
 SCOPES = 'https://www.googleapis.com/auth/drive'
 def main():
@@ -20,21 +22,22 @@ def main():
     init()
 
     creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    path_script = pathlib.Path(__file__).parent.resolve()
+    if os.path.exists(f'{path_script}/token.json'):
+        creds = Credentials.from_authorized_user_file(f'{path_script}/token.json', SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(f'{path_script}/credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('token.json', 'w') as token:
+        with open(f'{path_script}/token.json', 'w') as token:
             token.write(creds.to_json())
 
     service = build('drive', 'v3', credentials=creds)
+    print(f"Current directory: {pathlib.Path().resolve()}")
     print(colored('* Directory to save - enter to use current directory', 'blue'))
     folderName = input("   - Path: ")
     if not folderName:
